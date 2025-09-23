@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: meta-ads-integration
+    env: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3003
+      - key: META_ADS_KEY
+        sync: false
+      - key: META_ADS_SECRET
+        sync: false
+      - key: META_ADS_ACCOUNT_ID
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://your-frontend-domain.vercel.app
+
+
+

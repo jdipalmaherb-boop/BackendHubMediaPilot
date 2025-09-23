@@ -1,0 +1,4 @@
+"""Ad Copy Generator module."""
+
+
+

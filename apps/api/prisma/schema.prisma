@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Users of the system (kept minimal per requirements)
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A tenant/workspace that owns social connections, assets, and posts
+model Organization {
+  id             String           @id @default(cuid())
+  name           String
+  createdAt      DateTime         @default(now())
+
+  socialAccounts SocialAccount[]
+  assets         Asset[]
+  posts          Post[]
+}
+
+/// Connected social provider account for an organization
+model SocialAccount {
+  id                 String       @id @default(cuid())
+  provider           String
+  providerAccountId  String
+  accessToken        String?
+  refreshToken       String?
+  expiresAt          DateTime?
+  orgId              String
+  createdAt          DateTime     @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([orgId])
+}
+
+/// Stored media objects (e.g., S3/MinIO) associated to an org
+model Asset {
+  id        String     @id @default(cuid())
+  orgId     String
+  key       String
+  url       String
+  type      AssetType
+  createdAt DateTime   @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  posts        Post[]
+
+  /// Each org should not duplicate the same object key
+  @@unique([orgId, key])
+  @@index([orgId])
+}
+
+/// Content to publish to multiple platforms
+model Post {
+  id          String     @id @default(cuid())
+  orgId       String
+  content     String
+  platforms   Json       /// JSON of platforms & metadata (e.g., { twitter: {...}, linkedin: {...} })
+  scheduledAt DateTime?
+  status      PostStatus @default(DRAFT)
+  assetId     String?
+  createdAt   DateTime   @default(now())
+
+  /// AI enhancement data
+  finalCaption    String?  /// User-selected caption from AI options
+  aiScore         Int?     /// AI feedback score (1-10)
+  aiTips          Json?    /// AI feedback suggestions as JSON
+  editedAssetUrl  String?  /// URL to AI-edited/enhanced media
+  editedFormat    String?  /// Format of edited asset (e.g., "portrait", "square")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  asset        Asset?       @relation(fields: [assetId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([orgId])
+  @@index([assetId])
+}
+
+enum AssetType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  OTHER
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+  CANCELED
+}
+
+/// Advertising campaigns (dummy integration for now)
+model AdCampaign {
+  id        String    @id @default(cuid())
+  orgId     String
+  platform  String
+  name      String
+  budget    Decimal   @db.Decimal(10, 2)
+  status    AdStatus  @default(CREATED)
+  results   Json      @default("{}")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([orgId])
+  @@index([platform])
+}
+
+enum AdStatus {
+  CREATED
+  TESTING
+  PAUSED
+  ACTIVE
+  COMPLETED
+  FAILED
+}
+
+/// Simple landing pages for marketing/testing
+model LandingPage {
+  id        String   @id @default(cuid())
+  orgId     String
+  slug      String   @unique
+  headline  String
+  subtext   String
+  ctaText   String
+  ctaUrl    String
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([orgId])
+}
+
+/// System notifications for organizations
+model Notification {
+  id        String   @id @default(cuid())
+  orgId     String
+  type      String   /// Notification type (post_published, ad_campaign_completed, etc.)
+  message   String
+  timestamp DateTime @default(now())
+  read      Boolean  @default(false)
+  metadata  Json     @default("{}") /// Additional data for the notification
+
+  @@index([orgId])
+  @@index([read])
+  @@index([timestamp])
+}
+

@@ -1,0 +1,479 @@
+// AI-Powered Ads Automation Platform Database Schema
+// This schema supports autonomous campaign management, AI learning, and multi-platform optimization
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Core User and Organization Management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(USER)
+  orgId     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [orgId], references: [id])
+  campaigns    Campaign[]
+  rules        UserRule[]
+
+  @@index([orgId])
+  @@index([email])
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  settings  Json     @default("{}") // Organization-wide settings
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users      User[]
+  campaigns  Campaign[]
+  platforms  PlatformAccount[]
+  rules      UserRule[]
+  aiModels   AIModel[]
+  learnings  LearningData[]
+}
+
+// Platform Account Management
+model PlatformAccount {
+  id          String        @id @default(cuid())
+  orgId       String
+  platform    AdPlatform
+  accountId   String        // External platform account ID
+  name        String
+  accessToken String
+  refreshToken String?
+  expiresAt   DateTime?
+  isActive    Boolean       @default(true)
+  settings    Json          @default("{}") // Platform-specific settings
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [orgId], references: [id])
+  campaigns    Campaign[]
+
+  @@unique([orgId, platform, accountId])
+  @@index([orgId])
+  @@index([platform])
+}
+
+// Campaign Management
+model Campaign {
+  id          String        @id @default(cuid())
+  orgId       String
+  userId      String
+  platformId  String
+  name        String
+  status      CampaignStatus @default(DRAFT)
+  objective   CampaignObjective
+  budget      Decimal
+  dailyBudget Decimal
+  startDate   DateTime?
+  endDate     DateTime?
+  settings    Json          @default("{}") // Campaign-specific settings
+  aiSettings  Json          @default("{}") // AI optimization settings
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  organization   Organization     @relation(fields: [orgId], references: [id])
+  user           User             @relation(fields: [userId], references: [id])
+  platform       PlatformAccount  @relation(fields: [platformId], references: [id])
+  adGroups       AdGroup[]
+  creatives      Creative[]
+  audiences      Audience[]
+  optimizations  Optimization[]
+  learnings      LearningData[]
+  performance    PerformanceData[]
+
+  @@index([orgId])
+  @@index([platformId])
+  @@index([status])
+  @@index([objective])
+}
+
+// Ad Groups and Targeting
+model AdGroup {
+  id          String      @id @default(cuid())
+  campaignId  String
+  name        String
+  status      AdGroupStatus @default(ACTIVE)
+  bidStrategy BidStrategy
+  bidAmount   Decimal?
+  targeting   Json        @default("{}") // Targeting parameters
+  placements  Json        @default("[]") // Platform placements
+  schedule    Json        @default("{}") // Ad scheduling
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  campaign  Campaign  @relation(fields: [campaignId], references: [id])
+  creatives Creative[]
+  audiences Audience[]
+
+  @@index([campaignId])
+  @@index([status])
+}
+
+// Audience Management
+model Audience {
+  id          String        @id @default(cuid())
+  campaignId  String
+  adGroupId   String?
+  name        String
+  type        AudienceType
+  platformId  String?       // External platform audience ID
+  demographics Json         @default("{}") // Age, gender, location, etc.
+  interests   Json          @default("[]") // Interest targeting
+  behaviors   Json          @default("[]") // Behavioral targeting
+  customAudience Json       @default("{}") // Custom audience data
+  lookalike   Json          @default("{}") // Lookalike audience settings
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  campaign  Campaign  @relation(fields: [campaignId], references: [id])
+  adGroup   AdGroup?  @relation(fields: [adGroupId], references: [id])
+  creatives Creative[]
+
+  @@index([campaignId])
+  @@index([type])
+  @@index([isActive])
+}
+
+// Creative Management
+model Creative {
+  id          String        @id @default(cuid())
+  campaignId  String
+  adGroupId   String?
+  audienceId  String?
+  name        String
+  type        CreativeType
+  format      CreativeFormat
+  platformId  String?       // External platform creative ID
+  content     Json          @default("{}") // Creative content (text, images, videos)
+  assets      Json          @default("[]") // Media assets
+  aiGenerated Boolean       @default(false)
+  aiScore     Decimal?      // AI-predicted performance score
+  status      CreativeStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  campaign  Campaign  @relation(fields: [campaignId], references: [id])
+  adGroup   AdGroup?  @relation(fields: [adGroupId], references: [id])
+  audience  Audience? @relation(fields: [audienceId], references: [id])
+  performance PerformanceData[]
+
+  @@index([campaignId])
+  @@index([type])
+  @@index([status])
+  @@index([aiGenerated])
+}
+
+// AI Models and Learning
+model AIModel {
+  id          String    @id @default(cuid())
+  orgId       String
+  name        String
+  type        AIModelType
+  version     String
+  status      ModelStatus @default(TRAINING)
+  config      Json      @default("{}") // Model configuration
+  metrics     Json      @default("{}") // Model performance metrics
+  trainingData Json     @default("[]") // Training data references
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [orgId], references: [id])
+  learnings   LearningData[]
+
+  @@index([orgId])
+  @@index([type])
+  @@index([status])
+}
+
+model LearningData {
+  id          String    @id @default(cuid())
+  orgId       String
+  campaignId  String?
+  modelId     String?
+  dataType    LearningDataType
+  input       Json      @default("{}") // Input data
+  output      Json      @default("{}") // AI output/prediction
+  actual      Json      @default("{}") // Actual results
+  accuracy    Decimal?  // Prediction accuracy
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  organization Organization @relation(fields: [orgId], references: [id])
+  campaign    Campaign?     @relation(fields: [campaignId], references: [id])
+  model       AIModel?      @relation(fields: [modelId], references: [id])
+
+  @@index([orgId])
+  @@index([campaignId])
+  @@index([modelId])
+  @@index([dataType])
+}
+
+// Performance and Analytics
+model PerformanceData {
+  id          String   @id @default(cuid())
+  campaignId  String
+  creativeId  String?
+  date        DateTime
+  platform    AdPlatform
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  conversions Int      @default(0)
+  spend       Decimal  @default(0)
+  revenue     Decimal  @default(0)
+  ctr         Decimal  @default(0)
+  cpc         Decimal  @default(0)
+  cpa         Decimal  @default(0)
+  roas        Decimal  @default(0)
+  metadata    Json     @default("{}") // Additional performance metrics
+
+  // Relations
+  campaign Campaign  @relation(fields: [campaignId], references: [id])
+  creative Creative? @relation(fields: [creativeId], references: [id])
+
+  @@unique([campaignId, creativeId, date, platform])
+  @@index([campaignId])
+  @@index([date])
+  @@index([platform])
+}
+
+// Optimization and Automation
+model Optimization {
+  id          String            @id @default(cuid())
+  campaignId  String
+  type        OptimizationType
+  status      OptimizationStatus @default(PENDING)
+  action      Json              @default("{}") // Optimization action
+  reason      String?           // Why this optimization was made
+  aiConfidence Decimal?         // AI confidence in this optimization
+  result      Json              @default("{}") // Optimization result
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@index([type])
+  @@index([status])
+}
+
+// User Rules and Constraints
+model UserRule {
+  id          String    @id @default(cuid())
+  orgId       String
+  userId      String
+  name        String
+  type        RuleType
+  conditions  Json      @default("{}") // Rule conditions
+  actions     Json      @default("{}") // Rule actions
+  isActive    Boolean   @default(true)
+  priority    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [orgId], references: [id])
+  user        User          @relation(fields: [userId], references: [id])
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([type])
+  @@index([isActive])
+}
+
+// A/B Testing
+model ABTest {
+  id          String      @id @default(cuid())
+  campaignId  String
+  name        String
+  type        ABTestType
+  status      ABTestStatus @default(RUNNING)
+  variants    Json        @default("[]") // Test variants
+  winner      String?     // Winning variant ID
+  confidence  Decimal?    // Statistical confidence
+  startDate   DateTime
+  endDate     DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([campaignId])
+  @@index([status])
+  @@index([type])
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  USER
+  VIEWER
+}
+
+enum AdPlatform {
+  META
+  GOOGLE
+  TIKTOK
+  LINKEDIN
+  TWITTER
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum CampaignObjective {
+  AWARENESS
+  TRAFFIC
+  ENGAGEMENT
+  LEADS
+  SALES
+  APP_INSTALLS
+  VIDEO_VIEWS
+}
+
+enum AdGroupStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum BidStrategy {
+  MANUAL
+  TARGET_CPA
+  TARGET_ROAS
+  MAXIMIZE_CONVERSIONS
+  MAXIMIZE_CLICKS
+  LOWEST_COST
+}
+
+enum AudienceType {
+  CORE
+  LOOKALIKE
+  CUSTOM
+  RETARGETING
+  INTEREST
+  BEHAVIORAL
+}
+
+enum CreativeType {
+  IMAGE
+  VIDEO
+  CAROUSEL
+  COLLECTION
+  STORY
+  REELS
+}
+
+enum CreativeFormat {
+  SINGLE_IMAGE
+  SINGLE_VIDEO
+  CAROUSEL_IMAGE
+  CAROUSEL_VIDEO
+  COLLECTION
+  STORY_IMAGE
+  STORY_VIDEO
+  REELS_VIDEO
+}
+
+enum CreativeStatus {
+  ACTIVE
+  PAUSED
+  REJECTED
+  PENDING
+}
+
+enum AIModelType {
+  COPY_GENERATOR
+  CREATIVE_GENERATOR
+  TARGETING_OPTIMIZER
+  BID_OPTIMIZER
+  PERFORMANCE_PREDICTOR
+  AUDIENCE_ANALYZER
+}
+
+enum ModelStatus {
+  TRAINING
+  ACTIVE
+  DEPRECATED
+  ERROR
+}
+
+enum LearningDataType {
+  CAMPAIGN_PERFORMANCE
+  CREATIVE_PERFORMANCE
+  AUDIENCE_PERFORMANCE
+  BID_OPTIMIZATION
+  COPY_PERFORMANCE
+  TARGETING_PERFORMANCE
+}
+
+enum OptimizationType {
+  BID_ADJUSTMENT
+  BUDGET_REALLOCATION
+  AUDIENCE_EXPANSION
+  CREATIVE_REPLACEMENT
+  SCHEDULE_ADJUSTMENT
+  TARGETING_REFINEMENT
+  BID_STRATEGY_CHANGE
+}
+
+enum OptimizationStatus {
+  PENDING
+  APPLIED
+  FAILED
+  REJECTED
+}
+
+enum RuleType {
+  BUDGET_LIMIT
+  BID_LIMIT
+  PERFORMANCE_THRESHOLD
+  SCHEDULE_RULE
+  CONTENT_RULE
+  TARGETING_RULE
+}
+
+enum ABTestType {
+  CREATIVE
+  AUDIENCE
+  BID_STRATEGY
+  TARGETING
+  COPY
+  PLACEMENT
+}
+
+enum ABTestStatus {
+  RUNNING
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+
+

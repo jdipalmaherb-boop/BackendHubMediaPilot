@@ -1,0 +1,35 @@
+{
+  "name": "@social-app/backend-db",
+  "version": "1.0.0",
+  "description": "Database layer for social app backend",
+  "main": "index.js",
+  "scripts": {
+    "setup": "npm install && npm run generate && npm run db:push && npm run db:seed",
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:reset": "prisma migrate reset",
+    "studio": "prisma studio",
+    "db:push": "prisma db push",
+    "db:pull": "prisma db pull",
+    "db:seed": "tsx seed.ts",
+    "db:reset": "prisma migrate reset --force",
+    "db:backup": "cp dev.db dev.db.backup.$(date +%s)",
+    "dev": "tsx migrate.ts",
+    "build": "tsc",
+    "clean": "rm -rf dist generated node_modules dev.db*",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.7.1",
+    "prisma": "^5.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
+  },
+  "keywords": ["prisma", "database", "social-app"],
+  "author": "Social App Team",
+  "license": "MIT"
+}

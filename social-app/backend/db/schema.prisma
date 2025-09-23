@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  password       String
+  orgId          String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  
+  posts          Post[]
+  leads          Lead[]
+  ads            Ad[]
+  notifications  Notification[]
+
+  @@index([orgId])
+  @@index([email])
+}
+
+model Post {
+  id            String   @id @default(cuid())
+  fileUrl       String
+  caption       String
+  platforms     String[] // SQLite doesn't support arrays natively, but Prisma handles this
+  scheduledDate DateTime?
+  status        String   // pending, scheduled, published
+  orgId         String
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ads  Ad[]
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+model Ad {
+  id         String   @id @default(cuid())
+  postId     String
+  campaignId String
+  budget     Float
+  status     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([campaignId])
+  @@index([status])
+}
+
+model LandingPage {
+  id        String   @id @default(cuid())
+  orgId     String
+  headline  String
+  subtext   String
+  ctaText   String
+  ctaUrl    String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads Lead[]
+
+  @@index([orgId])
+  @@index([url])
+}
+
+model Lead {
+  id            String   @id @default(cuid())
+  name          String
+  email         String
+  phone         String?
+  landingPageId String
+  orgId         String
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  landingPage LandingPage  @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([landingPageId])
+  @@index([email])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  orgId     String
+  type      String
+  message   String
+  timestamp DateTime @default(now())
+  read      Boolean  @default(false)
+  userId    String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([read])
+  @@index([timestamp])
+  @@index([type])
+}
+
+
+

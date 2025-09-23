@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: social-backend
+    env: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: API_BASE_URL
+        value: https://your-main-api.railway.app
+      - key: ADS_API_BASE_URL
+        value: https://your-meta-ads.railway.app
+      - key: SCHEDULER_API_BASE_URL
+        value: https://your-main-api.railway.app
+      - key: GOHIGHLEVEL_API_BASE_URL
+        value: https://your-gohighlevel.railway.app
+      - key: ALLOWED_ORIGINS
+        value: https://your-frontend-domain.vercel.app
+
+
+

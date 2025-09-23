@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: gohighlevel-integration
+    env: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3004
+      - key: GOHIGHLEVEL_KEY
+        sync: false
+      - key: GOHIGHLEVEL_SECRET
+        sync: false
+      - key: GOHIGHLEVEL_ACCOUNT_ID
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://your-frontend-domain.vercel.app
+
+
+
