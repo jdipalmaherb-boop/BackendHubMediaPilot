@@ -1,26 +1,30 @@
+import 'dotenv/config';
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-import { env } from './env';
+import { env } from './env.js';
 import path from 'path';
-import { loadRoutes } from './lib/routeLoader';
-import { cookieParserMiddleware } from './middleware/cookieParser';
-import { loggingMiddleware, errorLoggingMiddleware, noLoggingMiddleware } from './middleware/requestId';
-import { rateLimitMiddleware, postRequestRateLimit } from './middleware/rateLimit';
-import { inputSanitizerMiddleware } from './middleware/inputSanitizer';
-import { log } from './lib/logger';
+import { fileURLToPath } from 'url';
+import { loadRoutes } from './lib/routeLoader.js';
+import { cookieParserMiddleware } from './middleware/cookieParser.js';
+import { loggingMiddleware, errorLoggingMiddleware, noLoggingMiddleware } from './middleware/requestId.js';
+import { rateLimitMiddleware, postRequestRateLimit } from './middleware/rateLimit.js';
+import { inputSanitizerMiddleware } from './middleware/inputSanitizer.js';
+import { log } from './lib/logger.js';
 import verifyFirebaseToken from './middleware/verifyFirebaseToken.js';
 
-dotenv.config();
+// Get the directory name for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Initialize Sentry if DSN is provided
 if (env.SENTRY_DSN) {
   try {
-    const Sentry = require('@sentry/node');
+    const { init } = await import('@sentry/node');
     
-    Sentry.init({
+    init({
       dsn: env.SENTRY_DSN,
       environment: env.NODE_ENV,
       tracesSampleRate: env.NODE_ENV === 'production' ? 0.1 : 1.0,
@@ -69,21 +73,10 @@ app.use(helmet({
   },
 }));
 
-// CORS configuration with restrictive whitelist
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'https://backendhub.com',
-  'https://www.backendhub.com',
-  'https://app.backendhub.com',
-  'https://staging.backendhub.com',
-];
+// CORS configuration with environment-based whitelist
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') ?? ['http://localhost:3000'];
 
-// Add environment-specific origins
-if (env.NODE_ENV === 'development') {
-  ALLOWED_ORIGINS.push('http://localhost:3000', 'http://127.0.0.1:3000');
-}
-
+// Add FRONTEND_URL if specified and not already in the list
 if (env.FRONTEND_URL && !ALLOWED_ORIGINS.includes(env.FRONTEND_URL)) {
   ALLOWED_ORIGINS.push(env.FRONTEND_URL);
 }
@@ -96,7 +89,7 @@ app.use(cors({
     if (ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
-      log.security('cors_blocked', 'medium', {
+      log.security('system', 'cors_blocked', 'medium', {
         origin,
         allowedOrigins: ALLOWED_ORIGINS,
       });
@@ -135,8 +128,13 @@ app.use(express.urlencoded({
 
 app.use(cookieParserMiddleware);
 
-// Health check endpoint (no logging to avoid noise)
-app.get('/health', noLoggingMiddleware, (_req, res) => res.json({ status: 'ok' }));
+app.get('/health', noLoggingMiddleware, (_req, res) => res.json({ ok: true }));
+
+// Test authentication endpoint
+app.get('/api/test-auth', verifyFirebaseToken, (req, res) => {
+  const user = (req as any).user;
+  res.json({ uid: user.uid, email: user.email });
+});
 
 // Example protected route using Firebase authentication
 app.use("/api/protected", verifyFirebaseToken, (req, res) => {
