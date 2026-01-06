@@ -17,7 +17,7 @@ createWorker(async (job) => {
 
   // Use AI-enhanced content if available, otherwise fall back to original
   const contentToPublish = post.finalCaption || post.content;
-  const mediaUrl = post.editedAssetUrl || (post.asset ? post.asset.url : null);
+  const mediaUrl = post.editedAssetUrl || null;
 
   // Create enhanced post object for publisher
   const enhancedPost = {
