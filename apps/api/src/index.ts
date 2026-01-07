@@ -4,15 +4,15 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { PrismaClient } from '@prisma/client';
-import { env } from './env.js';
+import { env } from './env';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { loadRoutes } from './lib/routeLoader.js';
-import { cookieParserMiddleware } from './middleware/cookieParser.js';
-import { loggingMiddleware, errorLoggingMiddleware, noLoggingMiddleware } from './middleware/requestId.js';
-import { rateLimitMiddleware, postRequestRateLimit } from './middleware/rateLimit.js';
-import { inputSanitizerMiddleware } from './middleware/inputSanitizer.js';
-import { log } from './lib/logger.js';
+import { cookieParserMiddleware } from './middleware/cookieParser';
+import { loggingMiddleware, errorLoggingMiddleware, noLoggingMiddleware } from './middleware/requestId';
+import { rateLimitMiddleware, postRequestRateLimit } from './middleware/rateLimit';
+import { inputSanitizerMiddleware } from './middleware/inputSanitizer';
+import { log } from './lib/logger';
 import verifyFirebaseToken from './middleware/verifyFirebaseToken.js';
 
 // Get the directory name for ES modules

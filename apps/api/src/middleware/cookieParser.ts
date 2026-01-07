@@ -1,6 +1,4 @@
 import cookieParser from 'cookie-parser';
+import type { RequestHandler } from 'express';
 
-// Cookie parser middleware with secure defaults
-export const cookieParserMiddleware = cookieParser();
-
-export default cookieParserMiddleware;
+export const cookieParserMiddleware: RequestHandler = cookieParser();

@@ -1,3 +1,4 @@
+import type { Express } from 'express';
 import { Router } from 'express';
 import multer from 'multer';
 import { PutObjectCommand, HeadBucketCommand, CreateBucketCommand } from '@aws-sdk/client-s3';
@@ -5,6 +6,9 @@ import { createS3Client } from '../lib/s3';
 import { prisma } from '../lib/prisma';
 import { lookup as lookupMime } from 'mime-types';
 import crypto from 'crypto';
+
+type UploadFile = { originalname: string; mimetype: string; buffer: Buffer };
+
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
@@ -16,15 +20,17 @@ function guessAssetType(mime: string | false | null) {
   return 'DOCUMENT';
 }
 
-// POST /api/assets/upload
-router.post('/upload', upload.single('file'), async (req, res) => {
-  const orgId = String(req.body?.orgId || '');
-  if (!orgId) return res.status(400).json({ error: 'orgId required' });
-  const file = req.file;
-  if (!file) return res.status(400).json({ error: 'file required' });
+  // POST /api/assets/upload
+  router.post('/upload', upload.single('file'), async (req, res) => {
+    const orgId = String(req.body?.orgId || '');
+    if (!orgId) return res.status(400).json({ error: 'orgId required' });
 
-  const s3 = createS3Client();
-  const bucket = process.env.S3_BUCKET || 'assets';
+    const file = req.file as UploadFile | undefined;
+    if (!file) return res.status(400).json({ error: 'file required' });
+
+    const s3 = createS3Client();
+    const bucket = process.env.S3_BUCKET || 'assets';
+
 
   // Ensure bucket exists (idempotent)
   try {
