@@ -1,4 +1,4 @@
-import { OAuthCallbackParams, OAuthConnectParams, OAuthProvider, OAuthTokenResponse } from '../types';
+import type { OAuthCallbackParams, OAuthConnectParams, OAuthProvider, OAuthTokenResponse } from '../types.js';
 
 const META_AUTH_URL = 'https://www.facebook.com/v19.0/dialog/oauth';
 const META_TOKEN_URL = 'https://graph.facebook.com/v19.0/oauth/access_token';

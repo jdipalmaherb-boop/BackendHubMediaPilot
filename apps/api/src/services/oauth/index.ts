@@ -1,5 +1,5 @@
-import { OAuthProvider } from './types';
-import { createMetaProvider } from './providers/meta';
+import type { OAuthProvider } from './types.js';
+import { createMetaProvider } from './providers/meta.js';
 
 const providers: Record<string, OAuthProvider> = {
   meta: createMetaProvider(),
