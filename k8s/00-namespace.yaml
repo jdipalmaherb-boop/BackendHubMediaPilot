@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: backendhub
+  labels:
+    name: backendhub
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backendhub-secrets
+  namespace: backendhub
+type: Opaque
+data:
+  # Base64 encoded secrets - replace with actual values
+  DATABASE_URL: cG9zdGdyZXNxbDovL3VzZXI6cGFzc3dvcmRAaG9zdDozMjE2L2RibmFtZQ==
+  REDIS_URL: cmVkaXM6Ly9ob3N0OjYzNzk=
+  JWT_SECRET: eW91ci1qd3Qtc2VjcmV0LWhlcmU=
+  JWT_REFRESH_SECRET: eW91ci1yZWZyZXNoLXNlY3JldC1oZXJl
+  OPENAI_API_KEY: eW91ci1vcGVuYWktYXBpLWtleS1oZXJl
+  STRIPE_SECRET_KEY: eW91ci1zdHJpcGUtc2VjcmV0LWtleS1oZXJl
+  STRIPE_WEBHOOK_SECRET: eW91ci1zdHJpcGUtd2ViaG9vay1zZWNyZXQtaGVyZQ==
+  GOHIGHLEVEL_API_KEY: eW91ci1nb2hpZ2hsZXZlbC1hcGkta2V5LWhlcmU=
+  SENTRY_DSN: eW91ci1zZW50cnktZHNuLWhlcmU=
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backendhub-config
+  namespace: backendhub
+data:
+  NODE_ENV: "production"
+  PORT: "3001"
+  AWS_REGION: "us-east-1"
+  S3_BUCKET_NAME: "backendhub-prod"
+  FRONTEND_URL: "https://app.backendhub.com"
+  LOG_LEVEL: "info"
+  MAX_REQUEST_SIZE: "10mb"
+  SLOW_REQUEST_THRESHOLD: "1000"

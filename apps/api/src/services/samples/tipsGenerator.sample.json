@@ -1,0 +1,39 @@
+{
+  "input": {
+    "industry": "SaaS marketing",
+    "context": "90-second testimonial clip",
+    "transcriptSnippet": "This platform cut our onboarding from weeks to hours."
+  },
+  "output": {
+    "hooks": [
+      "What if your onboarding took hours, not weeks?",
+      "The secret playbook we used to slash customer ramp time by 86%."
+    ],
+    "captionVariants": [
+      "Onboarding used to take weeks. Now it's hours. Here's how.",
+      "The SaaS growth lever nobody is talking about (yet)."
+    ],
+    "quickHooks": [
+      "Onboarding in hours? Watch this.",
+      "This is the growth lever no one's using."
+    ],
+    "thumbnailText": [
+      "From Weeks to Hours",
+      "Onboarding Hack"
+    ],
+    "hashtags": [
+      "#SaaSOnboarding",
+      "#StartupGrowth",
+      "#CustomerSuccess"
+    ],
+    "ctaSuggestions": [
+      "Book your onboarding diagnostic call today.",
+      "Download the proven onboarding playbook." 
+    ],
+    "distributionPlan": {
+      "organic": ["Post the full clip on LinkedIn with a carousel summary"],
+      "paid": ["Run a 30s cut as a retargeting video on LinkedIn"],
+      "retarget": ["Trigger an email drip to leads who watched 50% of the video"]
+    }
+  }
+}

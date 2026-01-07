@@ -11,3 +11,10 @@ coverage
 prisma/dev.db*
 
 
+
+# secrets
+serviceAccountKey.json
+**/serviceAccountKey.json
+**/*serviceAccount*.json
+**/*ServiceAccount*.json
+**/*service-key*.json

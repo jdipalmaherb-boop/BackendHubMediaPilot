@@ -1,0 +1,364 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backendhub-video-worker
+  namespace: backendhub
+  labels:
+    app: backendhub-video-worker
+    component: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backendhub-video-worker
+  template:
+    metadata:
+      labels:
+        app: backendhub-video-worker
+        component: worker
+    spec:
+      serviceAccountName: backendhub-worker
+      containers:
+      - name: video-worker
+        image: backendhub/worker:latest
+        imagePullPolicy: Always
+        command: ["node", "apps/api/dist/worker-runner.js"]
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: NODE_ENV
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: AWS_REGION
+        - name: S3_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: S3_BUCKET_NAME
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: LOG_LEVEL
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: backendhub-secrets
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: backendhub-secrets
+              key: REDIS_URL
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "ps aux | grep 'worker-runner.js' | grep -v grep"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "ps aux | grep 'worker-runner.js' | grep -v grep"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backendhub-scheduler-worker
+  namespace: backendhub
+  labels:
+    app: backendhub-scheduler-worker
+    component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backendhub-scheduler-worker
+  template:
+    metadata:
+      labels:
+        app: backendhub-scheduler-worker
+        component: worker
+    spec:
+      serviceAccountName: backendhub-worker
+      containers:
+      - name: scheduler-worker
+        image: backendhub/worker:latest
+        imagePullPolicy: Always
+        command: ["node", "apps/api/dist/worker-runner-scheduler.js"]
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: NODE_ENV
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: LOG_LEVEL
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: backendhub-secrets
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: backendhub-secrets
+              key: REDIS_URL
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "ps aux | grep 'worker-runner-scheduler.js' | grep -v grep"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "ps aux | grep 'worker-runner-scheduler.js' | grep -v grep"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backendhub-gohighlevel-worker
+  namespace: backendhub
+  labels:
+    app: backendhub-gohighlevel-worker
+    component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backendhub-gohighlevel-worker
+  template:
+    metadata:
+      labels:
+        app: backendhub-gohighlevel-worker
+        component: worker
+    spec:
+      serviceAccountName: backendhub-worker
+      containers:
+      - name: gohighlevel-worker
+        image: backendhub/worker:latest
+        imagePullPolicy: Always
+        command: ["node", "apps/api/dist/worker-runner-gohighlevel.js"]
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: NODE_ENV
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: LOG_LEVEL
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: backendhub-secrets
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: backendhub-secrets
+              key: REDIS_URL
+        - name: GOHIGHLEVEL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backendhub-secrets
+              key: GOHIGHLEVEL_API_KEY
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "ps aux | grep 'worker-runner-gohighlevel.js' | grep -v grep"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "ps aux | grep 'worker-runner-gohighlevel.js' | grep -v grep"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backendhub-privacy-worker
+  namespace: backendhub
+  labels:
+    app: backendhub-privacy-worker
+    component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backendhub-privacy-worker
+  template:
+    metadata:
+      labels:
+        app: backendhub-privacy-worker
+        component: worker
+    spec:
+      serviceAccountName: backendhub-worker
+      containers:
+      - name: privacy-worker
+        image: backendhub/worker:latest
+        imagePullPolicy: Always
+        command: ["node", "apps/api/dist/worker-runner-privacy.js"]
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: NODE_ENV
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: AWS_REGION
+        - name: S3_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: S3_BUCKET_NAME
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: backendhub-config
+              key: LOG_LEVEL
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: backendhub-secrets
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: backendhub-secrets
+              key: REDIS_URL
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "ps aux | grep 'worker-runner-privacy.js' | grep -v grep"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "ps aux | grep 'worker-runner-privacy.js' | grep -v grep"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
