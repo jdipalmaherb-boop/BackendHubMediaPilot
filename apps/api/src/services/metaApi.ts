@@ -1,100 +1,34 @@
-interface MetaCredentials {
-  accessToken?: string;
-  accountId?: string;
-}
+/**
+ * Minimal Meta Ads API wrapper (placeholder).
+ * Keeps TypeScript builds green while Meta setup is in progress.
+ */
 
-type StubResult<T extends string> = {
-  mode: 'stub';
-  action: T;
-  message: string;
-};
-
-type Result<T extends string, P> = StubResult<T> | P;
-
-function isConfigured() {
-  return Boolean(process.env.META_ACCESS_TOKEN && process.env.META_AD_ACCOUNT_ID);
-}
-
-function requireConfigured(): asserts process.env is NodeJS.ProcessEnv & {
+type MetaConfig = {
   META_ACCESS_TOKEN: string;
   META_AD_ACCOUNT_ID: string;
-} {
-  if (!isConfigured()) {
-    throw new Error('Meta API is not configured. Please set META_ACCESS_TOKEN and META_AD_ACCOUNT_ID.');
-  }
+};
+
+function requireConfigured(env: NodeJS.ProcessEnv): MetaConfig {
+  const token = env.META_ACCESS_TOKEN;
+  const adAccountId = env.META_AD_ACCOUNT_ID;
+
+  if (!token) throw new Error('Missing META_ACCESS_TOKEN');
+  if (!adAccountId) throw new Error('Missing META_AD_ACCOUNT_ID');
+
+  return { META_ACCESS_TOKEN: token, META_AD_ACCOUNT_ID: adAccountId };
 }
 
-export async function createMetaCreative(
-  payload: { name: string; body: string; imageUrl: string; callToAction: string },
-  credentials: MetaCredentials = {}
-): Promise<Result<'create-creative', { id: string }>> {
-  if (!isConfigured()) {
-    return {
-      mode: 'stub',
-      action: 'create-creative',
-      message: 'Meta API running in stub mode (no credentials).',
-    };
-  }
-
-  requireConfigured();
-
-  // TODO: Implement real API call to Meta when credentials available.
-  return { id: meta-creative- };
+export async function createMetaCreative(): Promise<{ id: string }> {
+  requireConfigured(process.env);
+  return { id: `meta-creative-${Date.now()}` };
 }
 
-export async function createMetaAdSet(
-  payload: { name: string; budget: number; audience: Record<string, unknown>; schedule?: Record<string, unknown> },
-  credentials: MetaCredentials = {}
-): Promise<Result<'create-adset', { id: string }>> {
-  if (!isConfigured()) {
-    return {
-      mode: 'stub',
-      action: 'create-adset',
-      message: 'Meta API running in stub mode (no credentials).',
-    };
-  }
-  requireConfigured();
-  return { id: meta-adset- };
+export async function createMetaAdSet(): Promise<{ id: string }> {
+  requireConfigured(process.env);
+  return { id: `meta-adset-${Date.now()}` };
 }
 
-export async function createMetaAd(
-  payload: { creativeId: string; adSetId: string; name: string },
-  credentials: MetaCredentials = {}
-): Promise<Result<'create-ad', { id: string }>> {
-  if (!isConfigured()) {
-    return {
-      mode: 'stub',
-      action: 'create-ad',
-      message: 'Meta API running in stub mode (no credentials).',
-    };
-  }
-  requireConfigured();
-  return { id: meta-ad- };
-}
-
-export async function pauseMetaAd(id: string): Promise<Result<'pause-ad', { id: string; status: string }>> {
-  if (!isConfigured()) {
-    return { mode: 'stub', action: 'pause-ad', message: 'Meta API running in stub mode (no credentials).' };
-  }
-  requireConfigured();
-  return { id, status: 'PAUSED' };
-}
-
-export async function fetchMetaInsights(
-  id: string,
-  range: { start: string; end: string }
-): Promise<Result<'fetch-insights', { impressions: number; clicks: number; spend: number }>> {
-  if (!isConfigured()) {
-    return {
-      mode: 'stub',
-      action: 'fetch-insights',
-      message: 'Meta API running in stub mode (no credentials).',
-    };
-  }
-  requireConfigured();
-  return {
-    impressions: Math.floor(Math.random() * 1000),
-    clicks: Math.floor(Math.random() * 200),
-    spend: Number((Math.random() * 100).toFixed(2)),
-  };
+export async function createMetaAd(): Promise<{ id: string }> {
+  requireConfigured(process.env);
+  return { id: `meta-ad-${Date.now()}` };
 }
