@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "rootDir": "src",
     "outDir": "dist",
     "strict": true,
@@ -28,10 +28,6 @@
     "src/middleware/inputSanitizer.ts",
 
     "src/routes/assets.ts",
-
-    "src/services/oauth/index.ts",
-    "src/services/publishers/index.ts",
-    "src/services/publishers/meta.ts",
-    "src/services/publishers/types.ts"
+    "src/services/oauth/index.ts"
   ]
 }
