@@ -18,25 +18,27 @@ model User {
 
 /// A tenant/workspace that owns social connections, assets, and posts
 model Organization {
-  id             String           @id @default(cuid())
-  name           String
-  createdAt      DateTime         @default(now())
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
 
   socialAccounts SocialAccount[]
   assets         Asset[]
   posts          Post[]
+  adCampaigns    AdCampaign[]
+  landingPages   LandingPage[]
 }
 
 /// Connected social provider account for an organization
 model SocialAccount {
-  id                 String       @id @default(cuid())
-  provider           String
-  providerAccountId  String
-  accessToken        String?
-  refreshToken       String?
-  expiresAt          DateTime?
-  orgId              String
-  createdAt          DateTime     @default(now())
+  id                String    @id @default(cuid())
+  provider          String
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         DateTime?
+  orgId             String
+  createdAt         DateTime  @default(now())
 
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -46,12 +48,12 @@ model SocialAccount {
 
 /// Stored media objects (e.g., S3/MinIO) associated to an org
 model Asset {
-  id        String     @id @default(cuid())
+  id        String    @id @default(cuid())
   orgId     String
   key       String
   url       String
   type      AssetType
-  createdAt DateTime   @default(now())
+  createdAt DateTime  @default(now())
 
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   posts        Post[]
@@ -66,18 +68,18 @@ model Post {
   id          String     @id @default(cuid())
   orgId       String
   content     String
-  platforms   Json       /// JSON of platforms & metadata (e.g., { twitter: {...}, linkedin: {...} })
+  platforms   Json /// JSON of platforms & metadata (e.g., { twitter: {...}, linkedin: {...} })
   scheduledAt DateTime?
   status      PostStatus @default(DRAFT)
   assetId     String?
   createdAt   DateTime   @default(now())
 
   /// AI enhancement data
-  finalCaption    String?  /// User-selected caption from AI options
-  aiScore         Int?     /// AI feedback score (1-10)
-  aiTips          Json?    /// AI feedback suggestions as JSON
-  editedAssetUrl  String?  /// URL to AI-edited/enhanced media
-  editedFormat    String?  /// Format of edited asset (e.g., "portrait", "square")
+  finalCaption   String? /// User-selected caption from AI options
+  aiScore        Int? /// AI feedback score (1-10)
+  aiTips         Json? /// AI feedback suggestions as JSON
+  editedAssetUrl String? /// URL to AI-edited/enhanced media
+  editedFormat   String? /// Format of edited asset (e.g., "portrait", "square")
 
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   asset        Asset?       @relation(fields: [assetId], references: [id], onDelete: SetNull, onUpdate: Cascade)
@@ -103,15 +105,15 @@ enum PostStatus {
 
 /// Advertising campaigns (dummy integration for now)
 model AdCampaign {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   orgId     String
   platform  String
   name      String
-  budget    Decimal   @db.Decimal(10, 2)
-  status    AdStatus  @default(CREATED)
-  results   Json      @default("{}")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  budget    Decimal  @db.Decimal(10, 2)
+  status    AdStatus @default(CREATED)
+  results   Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -148,7 +150,7 @@ model LandingPage {
 model Notification {
   id        String   @id @default(cuid())
   orgId     String
-  type      String   /// Notification type (post_published, ad_campaign_completed, etc.)
+  type      String /// Notification type (post_published, ad_campaign_completed, etc.)
   message   String
   timestamp DateTime @default(now())
   read      Boolean  @default(false)
@@ -158,4 +160,3 @@ model Notification {
   @@index([read])
   @@index([timestamp])
 }
-
