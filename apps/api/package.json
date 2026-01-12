@@ -64,5 +64,6 @@
     "ts-jest": "^29.1.2",
     "tsx": "4.11.0",
     "typescript": "5.4.5"
-  }
+  },
+  "type": "commonjs"
 }

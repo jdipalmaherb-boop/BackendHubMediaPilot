@@ -28,6 +28,18 @@
     "src/middleware/inputSanitizer.ts",
 
     "src/routes/assets.ts",
-    "src/services/oauth/index.ts"
+
+    "src/services/publishers/index.ts",
+    "src/services/publishers/meta.ts",
+    "src/services/publishers/types.ts",
+
+    "src/services/oauth/index.ts",
+
+    "src/config/firebaseAdmin.ts"
+  ],
+  "exclude": [
+    "src/**/__tests__/**",
+    "src/**/*.test.*",
+    "src/**/*.spec.*"
   ]
 }
