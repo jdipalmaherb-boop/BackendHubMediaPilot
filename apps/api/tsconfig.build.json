@@ -10,31 +10,28 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "allowJs": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
   "files": [
     "src/index.ts",
     "src/env.ts",
-
     "src/lib/logger.ts",
     "src/lib/prisma.ts",
     "src/lib/routeLoader.ts",
     "src/lib/s3.ts",
-
     "src/middleware/verifyFirebaseToken.js",
     "src/middleware/cookieParser.ts",
     "src/middleware/requestId.ts",
     "src/middleware/rateLimit.ts",
     "src/middleware/inputSanitizer.ts",
-
     "src/routes/assets.ts",
-
+    "src/routes/oauth.ts",
     "src/services/publishers/index.ts",
     "src/services/publishers/meta.ts",
     "src/services/publishers/types.ts",
-
     "src/services/oauth/index.ts",
-
     "src/config/firebaseAdmin.ts"
   ],
   "exclude": [
