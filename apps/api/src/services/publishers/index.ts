@@ -1,5 +1,5 @@
-import type { PublisherAdapter, ProviderName } from './types';
-import { metaPublisher } from './meta';
+import type { PublisherAdapter, ProviderName } from './types.js';
+import { metaPublisher } from './meta.js';
 
 const adapters: Record<ProviderName, PublisherAdapter> = {
   meta: metaPublisher,

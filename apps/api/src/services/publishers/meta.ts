@@ -1,5 +1,5 @@
 import type { Post, SocialAccount } from '@prisma/client';
-import type { PublisherAdapter } from './types';
+import type { PublisherAdapter } from './types.js';
 
 export const metaPublisher: PublisherAdapter = {
   name: 'meta',

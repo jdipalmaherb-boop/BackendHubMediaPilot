@@ -2,8 +2,8 @@ import type { Express } from 'express';
 import { Router } from 'express';
 import multer from 'multer';
 import { PutObjectCommand, HeadBucketCommand, CreateBucketCommand } from '@aws-sdk/client-s3';
-import { createS3Client } from '../lib/s3';
-import { prisma } from '../lib/prisma';
+import { createS3Client } from '../lib/s3.js';
+import { prisma } from '../lib/prisma.js';
 import { lookup as lookupMime } from 'mime-types';
 import crypto from 'crypto';
 
@@ -25,7 +25,7 @@ function guessAssetType(mime: string | false | null) {
     const orgId = String(req.body?.orgId || '');
     if (!orgId) return res.status(400).json({ error: 'orgId required' });
 
-    const file = req.file as UploadFile | undefined;
+    const file = (req as any).file as UploadFile | undefined;
     if (!file) return res.status(400).json({ error: 'file required' });
 
     const s3 = createS3Client();

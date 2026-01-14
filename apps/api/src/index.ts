@@ -154,14 +154,15 @@ async function main() {
   if (process.env.LOAD_ROUTES === "true") {
     await loadRoutes(app, routesDir);
   }
-const port = env.PORT;
+
+  const port = Number(process.env.PORT) || 4000;
   app.listen(port, '0.0.0.0', () => {
     log.info({
       port,
       env: env.NODE_ENV,
       sentryEnabled: !!env.SENTRY_DSN,
       type: 'server_start'
-    }, `API server started on port `);
+    }, `API server started on port ${port}`);
   });
 }
 
