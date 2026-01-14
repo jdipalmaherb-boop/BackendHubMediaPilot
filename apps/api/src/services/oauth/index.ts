@@ -1,15 +1,24 @@
-import type { OAuthProvider } from './types.js';
-import { createMetaProvider } from './providers/meta.js';
+import type { OAuthProvider } from './types';
 
-const providers: Record<string, OAuthProvider> = {
-  meta: createMetaProvider(),
-};
-
-export function getProvider(name: string): OAuthProvider | undefined {
-  return providers[name];
+export function getProvider(provider: string): OAuthProvider | null {
+  switch (provider) {
+    case 'meta': {
+      const { createMetaProvider } = require('./providers/meta');
+      return createMetaProvider();
+    }
+    case 'tiktok': {
+      const { createTikTokProvider } = require('./providers/tiktok');
+      return createTikTokProvider();
+    }
+    case 'youtube': {
+      const { createYouTubeProvider } = require('./providers/youtube');
+      return createYouTubeProvider();
+    }
+    case 'linkedin': {
+      const { createLinkedInProvider } = require('./providers/linkedin');
+      return createLinkedInProvider();
+    }
+    default:
+      return null;
+  }
 }
-
-
-
-
-
