@@ -15,6 +15,7 @@ import { rateLimitMiddleware, postRequestRateLimit } from './middleware/rateLimi
 import { inputSanitizerMiddleware } from './middleware/inputSanitizer.js';
 import { log } from './lib/logger.js';
 import verifyFirebaseToken from './middleware/verifyFirebaseToken.js';
+import tiktokOAuthRouter from './routes/tiktokOAuth';
 
 // Get the directory name for ES modules
 // __dirname is available in CommonJS output
@@ -145,6 +146,8 @@ app.use("/api/protected", verifyFirebaseToken, (req, res) => {
 app.use(postRequestRateLimit);
 
 // Error handling middleware (must be after routes)
+app.use('/oauth', tiktokOAuthRouter);
+
 app.use(errorLoggingMiddleware);
 
 // Auto-load routes from src/routes

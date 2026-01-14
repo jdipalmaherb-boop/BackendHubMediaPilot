@@ -1,7 +1,7 @@
 import type { Express, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-
+import { createRequire } from 'module';
 /**
  * Dynamically loads route modules from a directory.
  * Each module should export a default Express Router.
@@ -9,6 +9,8 @@ import path from 'path';
  */
 export async function loadRoutes(app: Express, routesDir: string): Promise<void> {
   if (!fs.existsSync(routesDir)) return;
+
+  const requireFn = createRequire(__filename);
 
   const entries = fs
     .readdirSync(routesDir, { withFileTypes: true })
@@ -23,7 +25,7 @@ export async function loadRoutes(app: Express, routesDir: string): Promise<void>
     if (base === 'index' || base.startsWith('_')) continue;
 
     const fullPath = path.join(routesDir, entry.name);
-    const mod: any = await import(pathToFileUrl(fullPath));
+    const mod: any = requireFn(fullPath);
     const router: Router | undefined = mod.default;
     if (!router) continue;
 
@@ -31,16 +33,4 @@ export async function loadRoutes(app: Express, routesDir: string): Promise<void>
     app.use(mountPath, router);
   }
 }
-
-function pathToFileUrl(p: string): string {
-  const resolved = path.resolve(p);
-  const url = new URL('file://');
-  // Ensure Windows paths are converted properly (e.g., C:\ -> /C:/)
-  url.pathname = resolved.replace(/\\/g, '/');
-  return url.toString();
-}
-
-
-
-
 
