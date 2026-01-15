@@ -37,7 +37,7 @@ router.get('/:provider/callback', async (req, res) => {
   try {
     const token = await impl.exchangeCode({ code, orgId });
     const account = await prisma.socialAccount.upsert({
-      where: { provider_providerAccountId: { provider, providerAccountId: token.providerAccountId } },
+      where: { orgId_provider_providerAccountId: { orgId, provider, providerAccountId: token.providerAccountId } },
       update: {
         accessToken: token.accessToken,
         refreshToken: token.refreshToken ?? null,
