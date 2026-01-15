@@ -47,21 +47,41 @@ router.get("/tiktok", async (req, res) => {
 
 router.get("/tiktok/callback", async (req, res) => {
   const code = req.query.code as string | undefined;
-  const rawState = req.query.state as string | undefined;
-  const error = req.query.error as string | undefined;
-  const errorDescription = req.query.error_description as string | undefined;
+    const rawState = req.query.state as string | undefined;
+    console.log("TIKTOK_CALLBACK rawState=", rawState);
+    const error = req.query.error as string | undefined;
+    const errorDescription = req.query.error_description as string | undefined;
 
-  let orgId = "";
-  try {
-    if (rawState) {
-      const parsed = JSON.parse(Buffer.from(rawState, "base64").toString());
-      orgId = parsed.orgId;
+
+    let orgId = "";
+
+    // Try base64(JSON) first
+    try {
+      if (rawState) {
+        const parsed = JSON.parse(Buffer.from(rawState, "base64").toString());
+        orgId = parsed?.orgId || "";
+      }
+    } catch {}
+
+    // If that failed, try plain JSON
+    if (!orgId) {
+      try {
+        if (rawState) {
+          const parsed = JSON.parse(String(rawState));
+          orgId = parsed?.orgId || "";
+        }
+      } catch {}
     }
-  } catch {}
 
-  if (!orgId) {
-    return res.status(400).json({ error: "orgId missing in state" });
-  }
+    // If still empty, accept raw string directly
+    if (!orgId && rawState) {
+      orgId = String(rawState);
+    }
+
+    if (!orgId) {
+      return res.status(400).json({ error: "orgId missing in state" });
+    }
+
   if (error) {
     return res
       .status(400)
