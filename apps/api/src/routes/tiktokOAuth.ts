@@ -1,5 +1,6 @@
 import { Router } from "express";
 import crypto from "crypto";
+import { prisma } from "../lib/prisma";
 
 const router = Router();
 
@@ -26,7 +27,10 @@ router.get("/tiktok", async (req, res) => {
   const scope = mustGetEnv("TIKTOK_SCOPES");
 
   // CSRF protection
-  const state = crypto.randomBytes(16).toString("hex");
+  const orgId = String(req.query.orgId || "");
+  if (!orgId) return res.status(400).json({ error: "orgId required" });
+
+  const state = Buffer.from(JSON.stringify({ orgId })).toString("base64");
 
   const url = new URL(TIKTOK_AUTHORIZE_URL);
   url.searchParams.set("client_key", clientKey);
@@ -43,10 +47,21 @@ router.get("/tiktok", async (req, res) => {
 
 router.get("/tiktok/callback", async (req, res) => {
   const code = req.query.code as string | undefined;
-  const state = req.query.state as string | undefined;
+  const rawState = req.query.state as string | undefined;
   const error = req.query.error as string | undefined;
   const errorDescription = req.query.error_description as string | undefined;
 
+  let orgId = "";
+  try {
+    if (rawState) {
+      const parsed = JSON.parse(Buffer.from(rawState, "base64").toString());
+      orgId = parsed.orgId;
+    }
+  } catch {}
+
+  if (!orgId) {
+    return res.status(400).json({ error: "orgId missing in state" });
+  }
   if (error) {
     return res
       .status(400)
@@ -81,9 +96,55 @@ router.get("/tiktok/callback", async (req, res) => {
     return res.status(500).send(`Token exchange failed (${resp.status}): ${JSON.stringify(json)}`);
   }
 
-  // For now, just show the token response so we know it works.
-  // Next step will be saving this to DB (SocialAccount) tied to org/user.
-  return res.status(200).json({ state, token: json });
+
+const org = await prisma.organization.findUnique({ where: { id: orgId } });
+if (!org) return res.status(400).json({ error: 'Invalid orgId' });
+
+// TikTok account identifier (varies by API)
+const providerAccountId =
+  json?.open_id ||
+  json?.union_id ||
+  json?.data?.open_id ||
+  json?.data?.union_id;
+
+if (!providerAccountId) {
+  return res.status(500).json({ error: 'Missing TikTok provider account id' });
+}
+
+const expiresIn =
+  json?.expires_in ||
+  json?.data?.expires_in ||
+  null;
+
+const expiresAt = expiresIn
+  ? new Date(Date.now() + Number(expiresIn) * 1000)
+  : null;
+
+await prisma.socialAccount.upsert({
+  where: {
+    orgId_provider_providerAccountId: {
+      orgId,
+      provider: 'tiktok',
+      providerAccountId: String(providerAccountId),
+    },
+  },
+  update: {
+    accessToken: json?.access_token || json?.data?.access_token || null,
+    refreshToken: json?.refresh_token || json?.data?.refresh_token || null,
+    expiresAt,
+  },
+  create: {
+    orgId,
+    provider: 'tiktok',
+    providerAccountId: String(providerAccountId),
+    accessToken: json?.access_token || json?.data?.access_token || null,
+    refreshToken: json?.refresh_token || json?.data?.refresh_token || null,
+    expiresAt,
+  },
+});
+
+return res.status(200).json({ success: true });
+
 });
 
 export default router;
