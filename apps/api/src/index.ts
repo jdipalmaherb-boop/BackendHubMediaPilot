@@ -157,10 +157,32 @@ async function main() {
   if (process.env.LOAD_ROUTES === "true") {
     await loadRoutes(app, routesDir);
   }
+app.get('/debug/org-count', async (_req, res) => {
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const p = new PrismaClient();
+    const count = await p.organization.count();
+    await p.$disconnect();
+    res.json({ organizationCount: count });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || String(e) });
+  }
+});
+
 app.get('/debug/db', (_req, res) => {
   const url = process.env.DATABASE_URL || '';
   const redacted = url.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
-  res.json({ databaseUrl: redacted });
+  
+app.get('/debug/org-count', async (_req, res) => {
+  try {
+    const count = await prisma.organization.count();
+    res.json({ count });
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+res.json({ databaseUrl: redacted });
 });
 
 
