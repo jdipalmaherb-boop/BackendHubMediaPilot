@@ -173,6 +173,16 @@ app.get('/debug/db', (_req, res) => {
   const url = process.env.DATABASE_URL || '';
   const redacted = url.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
   
+
+app.get('/debug/org-count', async (_req, res) => {
+  try {
+    const count = await prisma.organization.count();
+    res.json({ count });
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
 app.get('/debug/org-count', async (_req, res) => {
   try {
     const count = await prisma.organization.count();
