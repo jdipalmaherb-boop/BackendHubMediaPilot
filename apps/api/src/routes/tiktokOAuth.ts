@@ -46,6 +46,7 @@ router.get("/tiktok", async (req, res) => {
 });
 
 router.get("/tiktok/callback", async (req, res) => {
+  try {
   const code = req.query.code as string | undefined;
     const rawState = req.query.state as string | undefined;
     console.log("TIKTOK_CALLBACK rawState=", rawState);
@@ -165,6 +166,13 @@ await prisma.socialAccount.upsert({
 
 return res.status(200).json({ success: true });
 
+  } catch (err: any) {
+    console.error("TIKTOK_CALLBACK_FATAL", err);
+    return res.status(500).json({
+      error: "tiktok callback failed",
+      message: err?.message || String(err),
+    });
+  }
 });
 
 export default router;
