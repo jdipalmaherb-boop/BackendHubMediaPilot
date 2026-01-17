@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "prisma generate --schema=prisma/schema.prisma && tsc -p tsconfig.build.json",
-    "start": "pnpm exec prisma migrate deploy && node dist/index.js"
+    "start": "sh -c 'pnpm exec prisma migrate deploy || true; node dist/index.js'"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.600.0",
