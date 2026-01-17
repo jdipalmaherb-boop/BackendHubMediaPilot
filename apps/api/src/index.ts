@@ -157,6 +157,12 @@ async function main() {
   if (process.env.LOAD_ROUTES === "true") {
     await loadRoutes(app, routesDir);
   }
+app.get('/debug/db', (_req, res) => {
+  const url = process.env.DATABASE_URL || '';
+  const redacted = url.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
+  res.json({ databaseUrl: redacted });
+});
+
 
   const port = Number(process.env.PORT) || 4000;
   app.listen(port, '0.0.0.0', () => {
