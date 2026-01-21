@@ -150,66 +150,68 @@ app.use('/oauth', tiktokOAuthRouter);
 
 app.use(errorLoggingMiddleware);
 
-// Auto-load routes from src/routes
-const routesDir = path.join(__dirname, 'routes');
 
-async function main() {
-  if (process.env.LOAD_ROUTES === "true") {
-    await loadRoutes(app, routesDir);
+  // Auto-load routes from src/routes
+  const routesDir = path.join(__dirname, 'routes');
+
+  async function main() {
+    if (process.env.LOAD_ROUTES === "true") {
+      await loadRoutes(app, routesDir);
+    }
+
+    // Debug: show which DB Railway is using (redacted password)
+    app.get('/debug/db', (_req, res) => {
+      const url = process.env.DATABASE_URL || '';
+      const redacted = url.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
+      return res.json({ databaseUrl: redacted });
+    });
+
+    // Debug: count orgs
+    app.get('/debug/org-count', async (_req, res) => {
+      try {
+        const count = await prisma.organization.count();
+        return res.json({ ok: true, count });
+      } catch (e: any) {
+        return res.status(500).json({ ok: false, error: String(e?.message || e) });
+      }
+    });
+
+    // Debug: list orgs (copy an orgId)
+    app.get('/debug/orgs', async (_req, res) => {
+      try {
+        const orgs = await prisma.organization.findMany({
+          select: { id: true, name: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        });
+        return res.json({ ok: true, orgs });
+      } catch (e: any) {
+        return res.status(500).json({ ok: false, error: String(e?.message || e) });
+      }
+    });
+
+    // Debug: create an org in Railway DB
+    app.post('/debug/create-org', async (req, res) => {
+      try {
+        const name = String((req as any).body?.name || 'Default Org');
+        const org = await prisma.organization.create({ data: { name } });
+        return res.json({ ok: true, org });
+      } catch (e: any) {
+        return res.status(500).json({ ok: false, error: String(e?.message || e) });
+      }
+    });
+
+    const port = Number(process.env.PORT) || 4000;
+    app.listen(port, '0.0.0.0', () => {
+      log.info({
+        port,
+        env: env.NODE_ENV,
+        sentryEnabled: !!env.SENTRY_DSN,
+        type: 'server_start'
+      }, `API server started on port ${port}`);
+    });
   }
-app.get('/debug/org-count', async (_req, res) => {
-  try {
-    const { PrismaClient } = require('@prisma/client');
-    const p = new PrismaClient();
-    const count = await p.organization.count();
-    await p.$disconnect();
-    res.json({ organizationCount: count });
-  } catch (e: any) {
-    res.status(500).json({ error: e?.message || String(e) });
-  }
-});
 
-app.get('/debug/db', (_req, res) => {
-  const url = process.env.DATABASE_URL || '';
-  const redacted = url.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
-  
-
-app.get('/debug/org-count', async (_req, res) => {
-  try {
-    const count = await prisma.organization.count();
-    res.json({ count });
-  } catch (e) {
-    res.status(500).json({ error: String(e) });
-  }
-});
-
-app.get('/debug/org-count', async (_req, res) => {
-  try {
-    const count = await prisma.organization.count();
-    res.json({ count });
-  } catch (e) {
-    res.status(500).json({ error: String(e) });
-  }
-});
-
-res.json({ databaseUrl: redacted });
-});
-
-
-  const port = Number(process.env.PORT) || 4000;
-  app.listen(port, '0.0.0.0', () => {
-    log.info({
-      port,
-      env: env.NODE_ENV,
-      sentryEnabled: !!env.SENTRY_DSN,
-      type: 'server_start'
-    }, `API server started on port ${port}`);
+  main().catch((err) => {
+    console.error('Fatal startup error:', err);
+    process.exit(1);
   });
-}
-
-
-
-main().catch((err) => {
-  console.error('Fatal startup error:', err);
-  process.exit(1);
-});
