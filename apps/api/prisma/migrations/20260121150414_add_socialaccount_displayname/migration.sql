@@ -1,0 +1,2 @@
+ALTER TABLE "SocialAccount"
+ADD COLUMN IF NOT EXISTS "displayName" TEXT;
